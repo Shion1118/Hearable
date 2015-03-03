@@ -7,38 +7,27 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 import jp.ne.docomo.smt.dev.characterrecognition.SceneCharacterRecognition;
 import jp.ne.docomo.smt.dev.characterrecognition.constants.Lang;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionMessageData;
-import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionPointData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionResultData;
-import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionShapeData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionWordData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionWordsData;
 import jp.ne.docomo.smt.dev.characterrecognition.param.CharacterRecognitionJobInfoRequestParam;
 import com.shion1118.hearable.workflow.RecognitionAsyncTaskParam;
-
-import org.xml.sax.helpers.DefaultHandler;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import jp.ne.docomo.smt.dev.common.exception.SdkException;
 import jp.ne.docomo.smt.dev.common.exception.ServerException;
 
@@ -223,6 +212,16 @@ public class OCR extends Activity {
             } catch (IOException e) {
 
             }
+        } else {
+            String url = "http://translate.google.com/translate_tts?tl=ja&q=" + item;
+            try {
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(url);
+                mediaPlayer.prepare();
+                mediaPlayer.start();
+            } catch (IOException e) {
+
+            }
         }
     }
 
@@ -231,6 +230,18 @@ public class OCR extends Activity {
         super.onPause();
         if(task != null){
             task.cancel(true);
+        }
+    }
+
+    // 戻った時の処理
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK) {
+            MainActivity.result.setText("");
+            MainActivity.resultBtn.setEnabled(false);
+            return super.onKeyDown(keyCode, event);
+        } else {
+            return super.onKeyDown(keyCode, event);
         }
     }
 }
