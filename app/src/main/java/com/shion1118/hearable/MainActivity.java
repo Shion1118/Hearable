@@ -1,6 +1,5 @@
 package com.shion1118.hearable;
 
-import jp.ne.docomo.smt.dev.characterrecognition.DocumentCharacterRecognition;
 import jp.ne.docomo.smt.dev.characterrecognition.SceneCharacterRecognition;
 import jp.ne.docomo.smt.dev.characterrecognition.constants.ImageContentType;
 import jp.ne.docomo.smt.dev.characterrecognition.constants.Lang;
@@ -14,12 +13,12 @@ import jp.ne.docomo.smt.dev.common.http.AuthApiKey;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
 import android.provider.MediaStore;
-import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
@@ -27,12 +26,19 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class MainActivity extends Activity implements OnClickListener  {
 
     static final String APIKEY = "";
 
     private RecognitionAsyncTask task;
+
+    int RESULT_PICK_FILENAME = 1;
 
     // 認識ジョブID
     public static String jobid = "";
@@ -43,14 +49,11 @@ public class MainActivity extends Activity implements OnClickListener  {
     //使用言語
     public static Lang lang = null;
 
-    // インテント言語
-    static final Lang INTENT_LANG = null;
-
     // 結果取得ボタン
-    private Button resultBtn = null;
+    static Button resultBtn = null;
 
     // リクエスト結果テキスト
-    private TextView result;
+    static TextView result;
 
     // 結果表示
     private class RecognitionAsyncTask extends AsyncTask<RecognitionAsyncTaskParam, Integer, CharacterRecognitionStatusData> {
@@ -155,6 +158,8 @@ public class MainActivity extends Activity implements OnClickListener  {
         resultBtn.setOnClickListener(this);
         btn = (Button)findViewById(R.id.button_lastphoto);
         btn.setOnClickListener(this);
+        btn = (Button)findViewById(R.id.button_choosephoto);
+        btn.setOnClickListener(this);
 
         // ソフトキーボードを非表示にする
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -186,9 +191,12 @@ public class MainActivity extends Activity implements OnClickListener  {
                 EditText editText = (EditText)findViewById(R.id.edit_path);
                 editText.setText(LastPhoto());
                 break;
+            case R.id.button_choosephoto:
+                Intent i = new Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(i, RESULT_PICK_FILENAME);
+                break;
         }
     }
-
 
     private void pushExecButton() {
         AlertDialog.Builder dlg = new AlertDialog.Builder(MainActivity.this);
@@ -218,6 +226,32 @@ public class MainActivity extends Activity implements OnClickListener  {
         // 実行
         task = new RecognitionAsyncTask(dlg);
         task.execute(param);
+    }
+
+    // ギャラリーから画像選択
+    @Override
+    protected void onActivityResult(int requestCode,int resultCode,Intent data) {
+
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RESULT_PICK_FILENAME
+                && resultCode == RESULT_OK
+                && null != data) {
+            Uri selectedImage = data.getData();
+            String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+            Cursor cursor = getContentResolver().query(
+                    selectedImage,
+                    filePathColumn, null, null, null);
+            cursor.moveToFirst();
+
+            int columnIndex
+                    = cursor.getColumnIndex(filePathColumn[0]);
+            String picturePath = cursor.getString(columnIndex);
+            cursor.close();
+            EditText editText = (EditText)findViewById(R.id.edit_path);
+            editText.setText(picturePath);
+        }
     }
 
     // 最後の写真取得

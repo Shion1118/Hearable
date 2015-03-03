@@ -7,37 +7,44 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
+import android.util.Log;
+import android.util.Xml;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.List;
 
 import jp.ne.docomo.smt.dev.characterrecognition.SceneCharacterRecognition;
 import jp.ne.docomo.smt.dev.characterrecognition.constants.Lang;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionMessageData;
-import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionPointData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionResultData;
-import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionShapeData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionWordData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionWordsData;
 import jp.ne.docomo.smt.dev.characterrecognition.param.CharacterRecognitionJobInfoRequestParam;
 import com.shion1118.hearable.workflow.RecognitionAsyncTaskParam;
 
-import org.xml.sax.helpers.DefaultHandler;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParser;
 
 import jp.ne.docomo.smt.dev.common.exception.SdkException;
 import jp.ne.docomo.smt.dev.common.exception.ServerException;
@@ -183,6 +190,7 @@ public class OCR extends Activity {
                         Toast.LENGTH_SHORT).show();
                 word.setText(item);
                 speakbtn.setVisibility(View.VISIBLE);
+                translate(item);
             }
         });
 
@@ -195,6 +203,9 @@ public class OCR extends Activity {
         // ソフトキーボードを非表示にする
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(result_get.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+
+        //翻訳のAsync無視
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
 
         // 認識ジョブIDを受取り EditText に設定する
         Intent intent =  this.getIntent();
@@ -212,6 +223,7 @@ public class OCR extends Activity {
         task.execute(param);
     }
 
+    // 発音
     public void speak(View v) {
         if(MainActivity.lang == Lang.CHARACTERS_EN) {
             String url = "http://translate.google.com/translate_tts?tl=en&q=" + item;
@@ -223,6 +235,78 @@ public class OCR extends Activity {
             } catch (IOException e) {
 
             }
+        } else {
+            String url = "http://translate.google.com/translate_tts?tl=ja&q=" + item;
+            try {
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(url);
+                mediaPlayer.prepare();
+                mediaPlayer.start();
+            } catch (IOException e) {
+
+            }
+        }
+    }
+
+    // 翻訳
+    public void translate(String word){
+        String url="https://datamarket.accesscontrol.windows.net/v2/OAuth2-13";
+        String url2="http://api.microsofttranslator.com/V2/Ajax.svc/TranslateArray";
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost post = new HttpPost(url);
+        HttpGet get = new HttpGet(url2);
+
+        ArrayList<NameValuePair> params = new ArrayList <NameValuePair>();
+        params.add( new BasicNameValuePair("client_id", "Hearable"));
+        params.add( new BasicNameValuePair("client_secret", "PT4D8LiE6c7nGffTHNkjbF+hvLQQLtbfXQTGDOhybN0="));
+        params.add( new BasicNameValuePair("scope", "http://api.microsofttranslator.com"));
+        params.add( new BasicNameValuePair("grant_type", "client_credentials"));
+
+        HttpResponse res = null;
+        HttpEntity entity = null;
+        JSONObject result = null;
+        String reponseText = null;
+        String accessToken = null;
+
+        try {
+            post.setEntity(new UrlEncodedFormEntity(params, "utf-8"));
+            res = httpClient.execute(post);
+            entity = res.getEntity();
+            reponseText = EntityUtils.toString(entity);
+            result = new JSONObject(reponseText);
+            accessToken = result.getString("access_token");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String uri = String.format("http://api.microsofttranslator.com/V2/Http.svc/Translate?from=en&to=ja&text=%s", word);
+        String authorization = String.format("Bearer %s", accessToken);
+        HttpGet httpGet = new HttpGet(uri);
+        httpGet.setHeader("Authorization", authorization);
+
+        try {
+            res = httpClient.execute(httpGet);
+            entity = res.getEntity();
+            parse(EntityUtils.toString(entity));
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            httpClient.getConnectionManager().shutdown();
+        }
+    }
+
+    //翻訳して受け取ったXMLパース
+    public void parse(String str) {
+        try{
+            XmlPullParser xmlPullParser = Xml.newPullParser();
+            xmlPullParser.setInput(new StringReader(str));
+
+            int eventType;
+            while ((eventType = xmlPullParser.next()) != XmlPullParser.END_DOCUMENT) {
+                translate_word.setText(xmlPullParser.nextText());
+            }
+        } catch (Exception e){
+            Log.d("HttpSampleActivity", "Error:parse");
         }
     }
 
@@ -231,6 +315,19 @@ public class OCR extends Activity {
         super.onPause();
         if(task != null){
             task.cancel(true);
+        }
+    }
+
+
+    // 戻った時の処理
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK) {
+            MainActivity.result.setText("");
+            MainActivity.resultBtn.setEnabled(false);
+            return super.onKeyDown(keyCode, event);
+        } else {
+            return super.onKeyDown(keyCode, event);
         }
     }
 }
