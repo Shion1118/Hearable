@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:id="@+id/select"
+        android:layout_height="50dp"
+        android:weightSum="1">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="190dp"
+            android:layout_height="50dp"
+            android:layout_weight="0.64">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20dp"
+                android:text="Please Select Word..."
+                android:id="@+id/select_word"
+                android:layout_weight="0.00" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20dp"
+                android:text="Translate Word"
+                android:id="@+id/translate"
+                android:layout_weight="0.00" />
+        </LinearLayout>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Speak"
+            android:id="@+id/speak"
+            android:background="#D8D8D8"
+            android:onClick="speak" />
+    </LinearLayout>
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="600dp"
+        android:id="@+id/listView"
+        android:layout_below="@+id/select"
+        android:layout_weight="0.91" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:id="@+id/result_get"
+        android:layout_below="@+id/listView"/>
+
+</LinearLayout>
