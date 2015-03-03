@@ -13,10 +13,12 @@ import jp.ne.docomo.smt.dev.common.exception.ServerException;
 import jp.ne.docomo.smt.dev.common.http.AuthApiKey;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -38,13 +40,19 @@ public class MainActivity extends Activity implements OnClickListener  {
     // インテントキー
     static final String INTENT_JOBID_KEY = "jobid";
 
+    //使用言語
+    public static Lang lang = null;
+
+    // インテント言語
+    static final Lang INTENT_LANG = null;
+
     // 結果取得ボタン
     private Button resultBtn = null;
 
-
-    // 結果表示
+    // リクエスト結果テキスト
     private TextView result;
 
+    // 結果表示
     private class RecognitionAsyncTask extends AsyncTask<RecognitionAsyncTaskParam, Integer, CharacterRecognitionStatusData> {
         private AlertDialog.Builder _dlg;
 
@@ -145,6 +153,8 @@ public class MainActivity extends Activity implements OnClickListener  {
         resultBtn = (Button)findViewById(R.id.button_go);
         resultBtn.setEnabled(false);
         resultBtn.setOnClickListener(this);
+        btn = (Button)findViewById(R.id.button_lastphoto);
+        btn.setOnClickListener(this);
 
         // ソフトキーボードを非表示にする
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -172,6 +182,10 @@ public class MainActivity extends Activity implements OnClickListener  {
                 intent.putExtra(INTENT_JOBID_KEY, this.jobid);
                 startActivity(intent);
                 break;
+            case R.id.button_lastphoto:
+                EditText editText = (EditText)findViewById(R.id.edit_path);
+                editText.setText(LastPhoto());
+                break;
         }
     }
 
@@ -195,7 +209,7 @@ public class MainActivity extends Activity implements OnClickListener  {
 
         // 認識言語取得
         radio = (RadioButton)findViewById(R.id.radio_jpn);
-        Lang lang = Lang.CHARACTERS_JP;
+        lang = Lang.CHARACTERS_JP;
         if (radio.isChecked() == false) {
             lang = Lang.CHARACTERS_EN;
         }
@@ -204,5 +218,26 @@ public class MainActivity extends Activity implements OnClickListener  {
         // 実行
         task = new RecognitionAsyncTask(dlg);
         task.execute(param);
+    }
+
+    // 最後の写真取得
+    private String LastPhoto(){
+        String[] projection = new String[]{
+                MediaStore.Images.ImageColumns._ID,
+                MediaStore.Images.ImageColumns.DATA,
+                MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME,
+                MediaStore.Images.ImageColumns.DATE_TAKEN,
+                MediaStore.Images.ImageColumns.MIME_TYPE
+        };
+        Cursor cursor = getContentResolver()
+                .query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, null,
+                        null, projection[3] + " DESC");
+        if (cursor.moveToFirst()) {
+            String imageLocation = cursor.getString(1);
+            cursor.close();
+            return imageLocation;
+        }
+        cursor.close();
+        return null;
     }
 }

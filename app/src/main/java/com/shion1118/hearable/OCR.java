@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jp.ne.docomo.smt.dev.characterrecognition.SceneCharacterRecognition;
+import jp.ne.docomo.smt.dev.characterrecognition.constants.Lang;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionMessageData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionPointData;
 import jp.ne.docomo.smt.dev.characterrecognition.data.CharacterRecognitionResultData;
@@ -147,6 +148,14 @@ public class OCR extends Activity {
                 CharacterRecognitionMessageData message = resultData.getMessage();
                 if (message != null) {
                     sb.append("メッセージ : " + message.getText() + "\n");
+
+                    //処理中の場合再実行
+                    AlertDialog.Builder dlg = new AlertDialog.Builder(OCR.this);
+                    RecognitionAsyncTaskParam param = new RecognitionAsyncTaskParam();
+                    param.setJobId(jobid);
+                    task = new RecognitionResultAsyncTask(dlg);
+                    task.execute(param);
+
                 }
                 result_get.setText(sb.toString());
                 listview.setAdapter(adapter);
@@ -204,14 +213,16 @@ public class OCR extends Activity {
     }
 
     public void speak(View v) {
-        String url = "http://translate.google.com/translate_tts?tl=en&q=" + item;
-        try {
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(url);
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-        }catch (IOException e){
+        if(MainActivity.lang == Lang.CHARACTERS_EN) {
+            String url = "http://translate.google.com/translate_tts?tl=en&q=" + item;
+            try {
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(url);
+                mediaPlayer.prepare();
+                mediaPlayer.start();
+            } catch (IOException e) {
 
+            }
         }
     }
 

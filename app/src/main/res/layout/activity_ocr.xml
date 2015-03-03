@@ -8,14 +8,13 @@
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:id="@+id/select"
-        android:layout_height="50dp"
+        android:layout_height="60dp"
         android:weightSum="1">
 
         <LinearLayout
             android:orientation="vertical"
-            android:layout_width="190dp"
-            android:layout_height="50dp"
-            android:layout_weight="0.64">
+            android:layout_width="302dp"
+            android:layout_height="50dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -35,20 +34,29 @@
         </LinearLayout>
 
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:text="Speak"
             android:id="@+id/speak"
             android:background="#D8D8D8"
             android:onClick="speak" />
     </LinearLayout>
 
+    <View android:id="@+id/separator"
+        android:layout_width="wrap_content"
+        android:background="#DDFFFFFF"
+        android:layout_below="@id/select"
+        android:layout_height="1dp"
+        android:layout_marginBottom="2dp">
+    </View>
+
+
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="600dp"
         android:id="@+id/listView"
-        android:layout_below="@+id/select"
-        android:layout_weight="0.91" />
+        android:layout_below="@+id/separator"
+        android:layout_weight="1.02" />
 
     <TextView
         android:layout_width="match_parent"
