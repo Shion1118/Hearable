@@ -1,2 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merger version="3"><dataSet config="main"><source path="/Users/dylim/Documents/Android Project/Hearable/openCVLibrary2410/src/main/assets"/></dataSet><dataSet config="debug"><source path="/Users/dylim/Documents/Android Project/Hearable/openCVLibrary2410/src/debug/assets"/></dataSet></merger>
+<merger version="3"><dataSet config="main"><source path="/Users/dylim/Documents/GitHub/Hearable/openCVLibrary2410/src/main/assets"/></dataSet><dataSet config="debug"><source path="/Users/dylim/Documents/GitHub/Hearable/openCVLibrary2410/src/debug/assets"/></dataSet></merger>

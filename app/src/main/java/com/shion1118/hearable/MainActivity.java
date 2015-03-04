@@ -25,6 +25,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -159,6 +160,7 @@ public class MainActivity extends Activity implements OnClickListener  {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         setContentView(R.layout.activity_main);
 
         AuthApiKey.initializeAuth(MainActivity.APIKEY);
@@ -232,14 +234,14 @@ public class MainActivity extends Activity implements OnClickListener  {
         mat.release();
         try{
             //ローカルファイルへ保存
-            FileOutputStream out = new FileOutputStream("/storage/sdcard0/DCIM/Camera/opencv.jpg");
+            FileOutputStream out = new FileOutputStream(Environment.getExternalStorageDirectory().getPath() + "/DCIM/opencv.jpg");
             bmp.compress(Bitmap.CompressFormat.JPEG,100,out);
             out.close();
         }catch(IOException e){
             e.printStackTrace();
         }
         // 2値化後の写真を取得
-        param.setImagePath("/storage/sdcard0/DCIM/Camera/opencv.jpg");
+        param.setImagePath(Environment.getExternalStorageDirectory().getPath() + "/DCIM/opencv.jpg");
 
 
         // 画像種別取得
