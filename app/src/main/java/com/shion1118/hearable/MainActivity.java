@@ -55,6 +55,7 @@ public class MainActivity extends Activity implements OnClickListener  {
     private RecognitionAsyncTask task;
 
     int RESULT_PICK_FILENAME = 1;
+    int REQUEST_IMAGE_CAPTURE = 2;
 
     // 認識ジョブID
     public static String jobid = "";
@@ -177,6 +178,8 @@ public class MainActivity extends Activity implements OnClickListener  {
         btn.setOnClickListener(this);
         btn = (Button)findViewById(R.id.button_choosephoto);
         btn.setOnClickListener(this);
+        btn = (Button)findViewById(R.id.button_takephoto);
+        btn.setOnClickListener(this);
 
         // ソフトキーボードを非表示にする
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -212,6 +215,12 @@ public class MainActivity extends Activity implements OnClickListener  {
                 Intent i = new Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(i, RESULT_PICK_FILENAME);
                 break;
+            case R.id.button_takephoto:
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                }
+                break;
         }
     }
 
@@ -245,15 +254,11 @@ public class MainActivity extends Activity implements OnClickListener  {
 
 
         // 画像種別取得
-        RadioButton radio = (RadioButton)findViewById(R.id.radio_jpg);
         ImageContentType imageType = ImageContentType.IMAGE_JPEG;
-        if (radio.isChecked() == false) {
-            imageType = ImageContentType.IMAGE_PNG;
-        }
         param.setImageType(imageType);
 
         // 認識言語取得
-        radio = (RadioButton)findViewById(R.id.radio_jpn);
+        RadioButton radio = (RadioButton)findViewById(R.id.radio_jpn);
         lang = Lang.CHARACTERS_JP;
         if (radio.isChecked() == false) {
             lang = Lang.CHARACTERS_EN;
@@ -265,15 +270,13 @@ public class MainActivity extends Activity implements OnClickListener  {
         task.execute(param);
     }
 
-    // ギャラリーから画像選択
+    // ギャラリーから画像選択 or 撮った写真を保存
     @Override
     protected void onActivityResult(int requestCode,int resultCode,Intent data) {
 
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RESULT_PICK_FILENAME
-                && resultCode == RESULT_OK
-                && null != data) {
+        if (requestCode == RESULT_PICK_FILENAME && resultCode == RESULT_OK && null != data) {
             Uri selectedImage = data.getData();
             String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
@@ -288,6 +291,22 @@ public class MainActivity extends Activity implements OnClickListener  {
             cursor.close();
             EditText editText = (EditText)findViewById(R.id.edit_path);
             editText.setText(picturePath);
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            Bitmap bmp = (Bitmap) extras.get("data");
+            String TimeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String FilePath = Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera/" + TimeStamp + ".jpg";
+            try{
+                // ギャラリーへ保存
+                FileOutputStream out = new FileOutputStream(FilePath);
+                bmp.compress(Bitmap.CompressFormat.JPEG,100,out);
+                out.close();
+            }catch(IOException e){
+                e.printStackTrace();
+            } finally {
+                EditText editText = (EditText)findViewById(R.id.edit_path);
+                editText.setText(FilePath);
+            }
         }
     }
 
