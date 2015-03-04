@@ -13,12 +13,16 @@ import jp.ne.docomo.smt.dev.common.http.AuthApiKey;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
@@ -28,9 +32,20 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends Activity implements OnClickListener  {
 
@@ -205,7 +220,27 @@ public class MainActivity extends Activity implements OnClickListener  {
         // パラメータ取得
         // イメージパス
         EditText editText = (EditText)findViewById(R.id.edit_path);
-        param.setImagePath(editText.getText().toString());
+
+        // 2値化
+        Mat mat = new Mat();
+        Bitmap bmp = BitmapFactory.decodeFile(editText.getText().toString());
+        Utils.bitmapToMat(bmp,mat);
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.threshold(mat, mat, 0, 255, Imgproc.THRESH_TOZERO | Imgproc.THRESH_OTSU);
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_GRAY2BGRA,4);
+        Utils.matToBitmap(mat, bmp);
+        mat.release();
+        try{
+            //ローカルファイルへ保存
+            FileOutputStream out = new FileOutputStream("/storage/sdcard0/DCIM/Camera/opencv.jpg");
+            bmp.compress(Bitmap.CompressFormat.JPEG,100,out);
+            out.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        // 2値化後の写真を取得
+        param.setImagePath("/storage/sdcard0/DCIM/Camera/opencv.jpg");
+
 
         // 画像種別取得
         RadioButton radio = (RadioButton)findViewById(R.id.radio_jpg);
@@ -274,4 +309,31 @@ public class MainActivity extends Activity implements OnClickListener  {
         cursor.close();
         return null;
     }
+
+    // Open CV 設定
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+            @Override
+            public void onManagerConnected(int status) {
+                switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.i("INFO", "OpenCV loaded successfully");
+                }
+                break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                }
+                break;
+            }
+    }};
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
+    }
+
+
+
 }

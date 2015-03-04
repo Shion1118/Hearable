@@ -279,7 +279,12 @@ public class OCR extends Activity {
             e.printStackTrace();
         }
 
-        String uri = String.format("http://api.microsofttranslator.com/V2/Http.svc/Translate?from=en&to=ja&text=%s", word);
+        String uri;
+        if(MainActivity.lang == Lang.CHARACTERS_EN){
+            uri = String.format("http://api.microsofttranslator.com/V2/Http.svc/Translate?from=en&to=ja&text=%s", word);
+        } else {
+            uri = String.format("http://api.microsofttranslator.com/V2/Http.svc/Translate?from=ja&to=en&text=%s", word);
+        }
         String authorization = String.format("Bearer %s", accessToken);
         HttpGet httpGet = new HttpGet(uri);
         httpGet.setHeader("Authorization", authorization);
@@ -317,7 +322,6 @@ public class OCR extends Activity {
             task.cancel(true);
         }
     }
-
 
     // 戻った時の処理
     @Override
